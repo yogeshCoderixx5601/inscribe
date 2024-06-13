@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@bitcoinerlab/secp256k1": "^1.0.2",
+    "bitcoinjs-lib": "^6.1.3",
     "@cmdcode/crypto-utils": "1.5.11",
     "@cmdcode/tapscript": "1.2.7",
     "@emotion/react": "^11.11.4",

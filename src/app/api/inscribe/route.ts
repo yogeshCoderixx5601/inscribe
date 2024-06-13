@@ -43,7 +43,7 @@ async function processInscription(inscription: ICreateInscription) {
     console.log({ inscription, txinfo });
   
     const data = Buffer.from(inscription.base64, "base64");
-  
+  console.log("buffer data inscribe", data)
     console.log({ mimetype: inscription.file_type });
   
     const script = [

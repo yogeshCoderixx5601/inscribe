@@ -38,7 +38,7 @@ const HomePage = () => {
 
           // Set the state object with the Base64 string, file type, and file size
           setFileData({
-            base64String: base64.split(",")[1], // Remove the prefix
+            base64String: base64, // Remove the prefix
             fileType: mimeType || "application/octet-stream",
             fileSize: file_size,
             fileName: file.name,
@@ -92,7 +92,7 @@ const HomePage = () => {
         </div>
       )}
       <div className="w-[300px] h-[300px]">
-        <img src={fileData.base64String} alt="" />
+        <img src={fileData.base64String} alt={fileData.base64String} />
       </div>
       <div className="flex w-full">
         <div

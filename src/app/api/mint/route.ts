@@ -7,9 +7,10 @@ import { Tap, Script, Address, Signer, Tx } from "@cmdcode/tapscript";
 import * as cryptoUtils from "@cmdcode/crypto-utils";
 import { ICreateInscription, IDocProcessed } from "@/types";
 import { MintData } from "@/models";
+import { generateUnsignedPsbtForInscription } from "@/utils/psbt";
 
 export async function POST(req: NextRequest) {
-try {
+  try {
     const formData = await req.formData();
     console.log(formData, "Form Data in route");
     await dbConnect();
@@ -24,7 +25,7 @@ try {
     const ordinal_pubkey = formData.get("ordinal_pubkey")?.toString();
     const wallet = formData.get("wallet")?.toString();
     const order_id = formData.get("order_id")?.toString();
-  
+
     if (
       !file_name ||
       !base64 ||
@@ -39,7 +40,7 @@ try {
     ) {
       throw Error("Items missing");
     }
-  
+
     let doc: ICreateInscription = {
       file_name,
       file_type,
@@ -52,7 +53,7 @@ try {
       wallet,
       order_id,
       status: "payment pending",
-      fee_rate: 20,
+      fee_rate: 262,
       privkey: "", // Default value for privkey
       inscription_address: "", // Default value for inscription_address
       txid: "", // Default value for txid
@@ -63,16 +64,34 @@ try {
       inscription_id: "", // Default value for inscription_id
       network: "testnet", // Set to "testnet"
     };
-    
-    
-    const inscription = await processInscription(doc, "testnet");
-    const inscriptionDetails = await MintData.create(inscription)
-    console.log(inscriptionDetails, "inscriptionDetails db")
-    return NextResponse.json({success:true, message:"ins generated"})
-} catch (error) {
-    console.log(error,"error")
-    return NextResponse.json({success:false, message:"ins generate error"})
-}
+
+    const data : any = await processInscription(doc, "testnet");
+
+    const inscription = data; // doc 
+    console.log(inscription,"inscription in route main")
+
+
+    const { psbt } = await generateUnsignedPsbtForInscription(
+      inscription.cardinal_address,
+      inscription.cardinal_pubkey,
+      inscription.fee_rate,
+      wallet,
+      [inscription],
+    );
+// 
+    console.log({ psbt });
+    data.psbt = psbt;
+
+    await dbConnect();
+    // Create the document
+    const newDocument = await MintData.create(data);
+    const inscriptionDetails = await MintData.create(inscription);
+    console.log(inscriptionDetails, "inscriptionDetails db");
+    return NextResponse.json({ success: true, message: "ins generated" });
+  } catch (error) {
+    console.log(error, "error");
+    return NextResponse.json({ success: false, message: "ins generate error" });
+  }
 }
 
 const PREFIX = 160;
@@ -202,9 +221,9 @@ async function processInscription(
   console.debug("Tapkey:", tapkey);
   console.log(mimeType);
   // 6674960
-  let txsize = PREFIX + Math.floor(data.length);
+  let txsize = PREFIX + Math.floor(data.length / 4);
 
-  let inscription_fee = doc.fee_rate * txsize * 3.5;
+  let inscription_fee = doc.fee_rate * txsize;
   doc.inscription_fee = inscription_fee;
   // total_fee += inscription_fee;
   console.log({ txsize, inscription_fee });
@@ -220,8 +239,6 @@ async function processInscription(
     fee_rate: doc.fee_rate,
     network,
   };
-console.log(inscription,"process inscription response")
+  console.log(inscription, "process inscription response");
   return inscription;
 }
-
-
