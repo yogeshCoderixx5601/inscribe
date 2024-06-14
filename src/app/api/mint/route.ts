@@ -8,8 +8,10 @@ import * as cryptoUtils from "@cmdcode/crypto-utils";
 import { ICreateInscription, IDocProcessed } from "@/types";
 import { MintData } from "@/models";
 import { generateUnsignedPsbtForInscription } from "@/utils/psbt";
+import { useSignTx } from "bitcoin-wallet-adapter";
 
 export async function POST(req: NextRequest) {
+
   try {
     const formData = await req.formData();
     console.log(formData, "Form Data in route");
@@ -84,10 +86,10 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
     // Create the document
-    const newDocument = await MintData.create(data);
+    // const newDocument = await MintData.create(data);
     const inscriptionDetails = await MintData.create(inscription);
     console.log(inscriptionDetails, "inscriptionDetails db");
-    return NextResponse.json({ success: true, message: "ins generated" });
+    return NextResponse.json({ psbt:psbt, orderId:inscriptionDetails.order_id});
   } catch (error) {
     console.log(error, "error");
     return NextResponse.json({ success: false, message: "ins generate error" });
